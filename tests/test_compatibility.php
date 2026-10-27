@@ -44,6 +44,7 @@ namespace {
         $lm_prefix = 'local_metrics\\';
 
         $tm_paths = [
+            __DIR__ . '/../../moodle-tool_monitoring45',
             __DIR__ . '/../../moodle-tool_monitoring_for_4.5',
             __DIR__ . '/../../../admin/tool/monitoring',
             __DIR__ . '/../vendor/tool_monitoring',
