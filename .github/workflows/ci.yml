@@ -1,10 +1,14 @@
-name: CI Lint & Validation
+name: CI & tool_monitoring Compatibility
 
 on:
   push:
     branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
+  schedule:
+    # Run daily at 06:00 UTC to verify ongoing compatibility with upstream tool_monitoring
+    - cron: '0 6 * * *'
+  workflow_dispatch:
 
 jobs:
   lint:
@@ -27,3 +31,31 @@ jobs:
       - name: Lint PHP Files
         run: |
           find . -name "*.php" -exec php -l {} \;
+
+  compatibility:
+    name: Upstream Compatibility (${{ matrix.php }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.1', '8.2', '8.3']
+
+    steps:
+      - name: Checkout local_metrics
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+
+      - name: Checkout upstream tool_monitoring
+        uses: actions/checkout@v4
+        with:
+          repository: 'Ennero/moodle-tool_monitoring_for_4.5'
+          ref: 'develop'
+          path: 'vendor/tool_monitoring'
+
+      - name: Run Compatibility & Integrity Test Suite (275 checks)
+        run: |
+          php tests/test_compatibility.php
