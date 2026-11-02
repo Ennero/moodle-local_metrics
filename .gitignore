@@ -1,4 +1,9 @@
+# General
+*.exe
+*.log
+*.tmp
+.env
 .DS_Store
 Thumbs.db
-*~
-*.swp
+.vscode/
+.idea/
