@@ -51,6 +51,36 @@ defined('MOODLE_INTERNAL') || die();
 class academic_queries {
 
     /**
+     * Escuelas y entidades académicas de la Facultad de Ingeniería (USAC).
+     * Incluye las escuelas departamentales, posgrados, centros de investigación y lingüística.
+     * Excluye categorías no académicas y de pruebas:
+     * Categoría 1, Misceláneos, INFORMES DE ACTIVIDADES, COMEVAL y SIMULACIÓN UEDi.
+     */
+    public const TRADITIONAL_SCHOOLS = [
+        'Escuela de C.E.S.E.M.',
+        'Escuela de CENTRO DE INV DE ING',
+        'Escuela de CIENCIAS',
+        'Escuela de CIENCIAS Y SISTEMAS',
+        'Escuela de CIVIL',
+        'Escuela de E. P. S.',
+        'Escuela de E.R.I.S.',
+        'Escuela de ESCUELA TECNICA',
+        'Escuela de MECANICA',
+        'Escuela de MECANICA ELECTRICA',
+        'Escuela de MECANICA INDUSTRIAL',
+        'Escuela de QUIMICA',
+        'LINGUISTICA',
+    ];
+
+    /**
+     * Condición SQL para incluir únicamente las escuelas tradicionales.
+     */
+    private static function traditional_schools_sql(string $alias = 'l1.name'): string {
+        $escaped = array_map(fn($name) => "'" . addslashes($name) . "'", self::TRADITIONAL_SCHOOLS);
+        return "{$alias} IN (" . implode(', ', $escaped) . ")";
+    }
+
+    /**
      * Expresion SQL para extraer el id de nivel N de la categoria de un curso.
      * Compatible con PostgreSQL y MySQL/MariaDB.
      */
@@ -82,9 +112,10 @@ class academic_queries {
         $l2 = self::level_id_expr(3);
         $l3 = self::level_id_expr(4);
         $l4 = self::level_id_expr(5);
+        $filter = self::traditional_schools_sql('l1.name');
         return "JOIN {course_categories} cc ON cc.id = c.category
                 JOIN {course_categories} l1
-                     ON l1.id = {$l1}
+                     ON l1.id = {$l1} AND {$filter}
                 LEFT JOIN {course_categories} l2
                      ON l2.id = {$l2}
                      AND cc.depth >= 2
@@ -295,6 +326,7 @@ class academic_queries {
         global $DB;
         if (!isset(self::$cache[__FUNCTION__])) {
             $l1 = self::level_id_expr(2);
+            $filter = self::traditional_schools_sql('l1.name');
             $sql = "SELECT r.shortname AS roleshortname, l1.name AS school,
                            COUNT(*) AS pairs,
                            COUNT(DISTINCT ra.userid) AS users
@@ -304,7 +336,7 @@ class academic_queries {
                       JOIN {course} c ON c.id = ctx.instanceid
                       JOIN {course_categories} cc ON cc.id = c.category
                       JOIN {course_categories} l1
-                           ON l1.id = {$l1}
+                           ON l1.id = {$l1} AND {$filter}
                      GROUP BY r.shortname, l1.id, l1.name";
             self::$cache[__FUNCTION__] = self::fetch_all($sql);
         }
@@ -319,11 +351,17 @@ class academic_queries {
     public static function students_in_multiple_courses(): int {
         global $DB;
         if (!isset(self::$cache[__FUNCTION__])) {
+            $l1 = self::level_id_expr(2);
+            $filter = self::traditional_schools_sql('l1.name');
             $sql = "SELECT COUNT(*) AS n FROM (
                         SELECT ra.userid
                           FROM {role_assignments} ra
                           JOIN {context} ctx ON ctx.id = ra.contextid AND ctx.contextlevel = 50
                           JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'student'
+                          JOIN {course} c ON c.id = ctx.instanceid
+                          JOIN {course_categories} cc ON cc.id = c.category
+                          JOIN {course_categories} l1
+                               ON l1.id = {$l1} AND {$filter}
                          GROUP BY ra.userid
                         HAVING COUNT(DISTINCT ctx.instanceid) > 1
                     ) t";
@@ -345,6 +383,7 @@ class academic_queries {
         [$rolesql, $params] = $DB->get_in_or_equal($roleshortnames, SQL_PARAMS_NAMED, 'role');
         $params['since'] = $sincets;
         $l1 = self::level_id_expr(2);
+        $filter = self::traditional_schools_sql('l1.name');
         $sql = "SELECT l1.name AS school, COUNT(DISTINCT ra.userid) AS n
                   FROM {role_assignments} ra
                   JOIN {context} ctx ON ctx.id = ra.contextid AND ctx.contextlevel = 50
@@ -352,7 +391,7 @@ class academic_queries {
                   JOIN {course} c ON c.id = ctx.instanceid
                   JOIN {course_categories} cc ON cc.id = c.category
                   JOIN {course_categories} l1
-                       ON l1.id = {$l1}
+                       ON l1.id = {$l1} AND {$filter}
                   JOIN {user} u ON u.id = ra.userid
                        AND u.deleted = 0 AND u.suspended = 0
                        AND u.lastaccess > 0 AND u.lastaccess >= :since
@@ -362,6 +401,39 @@ class academic_queries {
             $out[$r->school] = (int) $r->n;
         }
         return $out;
+    }
+
+    /**
+     * Mapeo de courseid a nombre(s) del/los docente(s) asignados al curso.
+     *
+     * @return array<int, string> courseid => nombres de docentes separados por coma
+     */
+    public static function course_teachers_map(): array {
+        if (!isset(self::$cache[__FUNCTION__])) {
+            $sql = "SELECT ctx.instanceid AS courseid, u.firstname, u.lastname, r.shortname AS roleshortname
+                      FROM {role_assignments} ra
+                      JOIN {context} ctx ON ctx.id = ra.contextid AND ctx.contextlevel = 50
+                      JOIN {role} r ON r.id = ra.roleid AND r.shortname IN ('editingteacher', 'teacher')
+                      JOIN {user} u ON u.id = ra.userid
+                     ORDER BY ctx.instanceid, CASE WHEN r.shortname = 'editingteacher' THEN 1 ELSE 2 END, u.lastname, u.firstname";
+            $teachers = [];
+            foreach (self::fetch_all($sql) as $row) {
+                $cid = (int) $row->courseid;
+                $name = trim($row->firstname . ' ' . $row->lastname);
+                if (!isset($teachers[$cid])) {
+                    $teachers[$cid] = [];
+                }
+                if (!in_array($name, $teachers[$cid], true)) {
+                    $teachers[$cid][] = $name;
+                }
+            }
+            $map = [];
+            foreach ($teachers as $cid => $names) {
+                $map[$cid] = implode(', ', $names);
+            }
+            self::$cache[__FUNCTION__] = $map;
+        }
+        return self::$cache[__FUNCTION__];
     }
 
     /**
