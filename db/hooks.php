@@ -66,4 +66,5 @@ $callbacks = [
     ['hook' => metric_collection::class, 'callback' => [metrics\submissions_missing::class, 'collect']],
     ['hook' => metric_collection::class, 'callback' => [metrics\unique_course_users::class, 'collect']],
     ['hook' => metric_collection::class, 'callback' => [metrics\users_never_logged_in::class, 'collect']],
+    ['hook' => metric_collection::class, 'callback' => [metrics\student_census::class, 'collect']],
 ];

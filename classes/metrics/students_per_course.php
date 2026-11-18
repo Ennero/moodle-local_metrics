@@ -49,8 +49,11 @@ class students_per_course extends metric {
         // Todas las series, incluso en 0: el mínimo por escuela/año/período
         // (min() en Grafana) necesita ver los cursos vacíos.
         $studentcounts = queries::student_counts_by_course();
+        $teachers = queries::course_teachers_map();
         foreach (queries::course_dimension_map() as $courseid => $row) {
-            yield new metric_value($studentcounts[$courseid] ?? 0, queries::course_labels($row));
+            $labels = queries::course_labels($row);
+            $labels['teacher'] = $teachers[$courseid] ?? 'Sin docente';
+            yield new metric_value($studentcounts[$courseid] ?? 0, $labels);
         }
     }
 }
