@@ -51,20 +51,25 @@ defined('MOODLE_INTERNAL') || die();
 class academic_queries {
 
     /**
-     * Escuelas académicas tradicionales de la Facultad de Ingeniería (USAC).
-     * Excluye categorías no académicas (Categoría 1, Misceláneos, INFORMES DE ACTIVIDADES,
-     * COMEVAL, SIMULACIÓN UEDi / Pruebas controladas, LINGUISTICA) e institutos/centros
-     * especiales (C.E.S.E.M., ERIS, Centro de Inv., Escuela Técnica).
+     * Escuelas y entidades académicas de la Facultad de Ingeniería (USAC).
+     * Incluye las escuelas departamentales, posgrados, centros de investigación y lingüística.
+     * Excluye categorías no académicas y de pruebas:
+     * Categoría 1, Misceláneos, INFORMES DE ACTIVIDADES, COMEVAL y SIMULACIÓN UEDi.
      */
     public const TRADITIONAL_SCHOOLS = [
+        'Escuela de C.E.S.E.M.',
+        'Escuela de CENTRO DE INV DE ING',
         'Escuela de CIENCIAS',
         'Escuela de CIENCIAS Y SISTEMAS',
         'Escuela de CIVIL',
         'Escuela de E. P. S.',
+        'Escuela de E.R.I.S.',
+        'Escuela de ESCUELA TECNICA',
         'Escuela de MECANICA',
         'Escuela de MECANICA ELECTRICA',
         'Escuela de MECANICA INDUSTRIAL',
         'Escuela de QUIMICA',
+        'LINGUISTICA',
     ];
 
     /**
