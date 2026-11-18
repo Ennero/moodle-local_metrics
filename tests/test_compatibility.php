@@ -105,7 +105,7 @@ namespace {
     $callbacks = [];
     require __DIR__ . '/../db/hooks.php';
     assert_true(!empty($callbacks), "Callbacks array is defined and not empty", $failures, $total_tests);
-    assert_true(count($callbacks) === 38, "Exactly 38 academic metrics are registered in hooks (found: " . count($callbacks) . ")", $failures, $total_tests);
+    assert_true(count($callbacks) === 39, "Exactly 39 academic metrics are registered in hooks (found: " . count($callbacks) . ")", $failures, $total_tests);
 
     $hook_class = \tool_monitoring\hook\metric_collection::class;
     assert_true(class_exists($hook_class), "Hook class tool_monitoring\\hook\\metric_collection exists", $failures, $total_tests);
@@ -121,9 +121,9 @@ namespace {
         'courses_by_dimension', 'courses_without_students', 'courses_without_teachers', 'enrolments_by_method',
         'enrolments_by_status', 'enrolments_total', 'expected_submissions_by_dimension', 'inactive_users',
         'last_activity_age', 'module_views', 'new_users', 'quiz_attempting_students', 'quiz_attempts_by_state',
-        'quiz_average_grade', 'quiz_grade_results', 'quizzes_by_dimension', 'role_enrolments', 'student_logins',
-        'students_enrolled', 'students_multiple_courses', 'students_per_course', 'students_without_quiz_attempt',
-        'submissions_missing', 'unique_course_users', 'users_never_logged_in'
+        'quiz_average_grade', 'quiz_grade_results', 'quizzes_by_dimension', 'role_enrolments', 'student_census',
+        'student_logins', 'students_enrolled', 'students_multiple_courses', 'students_per_course',
+        'students_without_quiz_attempt', 'submissions_missing', 'unique_course_users', 'users_never_logged_in'
     ];
 
     $registered_names = [];
@@ -152,7 +152,7 @@ namespace {
         assert_true(str_starts_with($qname, 'local_metrics_'), "$qname starts with local_metrics_", $failures, $total_tests);
     }
 
-    assert_true(count(array_unique($registered_names)) === 38, "All 38 registered metrics have unique names", $failures, $total_tests);
+    assert_true(count(array_unique($registered_names)) === 39, "All 39 registered metrics have unique names", $failures, $total_tests);
 
     // 4. Validate Language Strings
     echo "\n--- 4. Validating Language Strings ---\n";

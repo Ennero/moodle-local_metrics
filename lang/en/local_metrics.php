@@ -109,3 +109,5 @@ $string['metric:assignments_pending_grading_desc'] =
     'HU3-T7. Submitted assignments (status = submitted) with no matching row in assign_grades yet, by school / year / period / course.';
 $string['metric:average_grading_delay_desc'] =
     'HU3-T7. Average delay in seconds between a submission and its grade, by school / year / period / course. Not zero-filled: no graded submissions means no series, not a misleading "0 seconds". Per course, as two series: stat="sum" and stat="count" (average = sum / count, so any set of courses can be averaged correctly).';
+$string['metric:student_census_desc'] =
+    'Institutional census of unique students, total site accounts, active students, and annual/period enrolments.';
