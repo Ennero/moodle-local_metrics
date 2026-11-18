@@ -41,8 +41,12 @@ class student_census extends metric {
 
     #[\Override]
     public function calculate(metric_config|null $config = null): iterable {
-        foreach (queries::student_census_data() as $type => $count) {
-            yield new metric_value((int) $count, ['census_type' => $type]);
+        foreach (queries::student_census_data() as $key => $val) {
+            if (is_array($val) && isset($val['value'], $val['labels'])) {
+                yield new metric_value((int) $val['value'], $val['labels']);
+            } else {
+                yield new metric_value((int) $val, ['census_type' => (string) $key]);
+            }
         }
     }
 }
